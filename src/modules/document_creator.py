@@ -4,8 +4,7 @@ Provides a document creation interface with AI-powered editing and assistance.
 """
 
 import os
-from typing import Literal, Optional, Dict, Any, Union
-from enum import Enum
+from typing import Optional
 from threading import Thread
 
 from PyQt6.QtWidgets import (
@@ -17,80 +16,13 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QComboBox,
     QLabel,
-    QFrame,
-    QSizePolicy,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSize
-from PyQt6.QtGui import QFont, QTextCursor
+from PyQt6.QtCore import Qt, pyqtSignal
 
-from pydantic import BaseModel, Field
-
-# Import AI agent for document processing
+# Import from modules
 from modules.ai_agent import DocumentAIAgent, DocumentResponse
-
-
-class ProcessingMode(str, Enum):
-    """Enum for processing modes"""
-
-    ASK = "ask"
-    EDIT = "edit"
-
-
-class DocumentRequest(BaseModel):
-    """
-    Request model for document processing
-    """
-
-    mode: ProcessingMode
-    prompt: str
-    content: str = Field(default="")
-
-
-class ChatBubble(QFrame):
-    """Widget for displaying chat messages in the Document Creator"""
-
-    def __init__(self, message_text: str, is_user: bool, parent=None):
-        super().__init__(parent)
-        self.setObjectName("ChatBubble")
-
-        # Configure frame appearance
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setFrameShadow(QFrame.Shadow.Raised)
-        self.setStyleSheet(
-            # f"background-color: {'#e1ffc7' if is_user else '#ffffff'}; "
-            f"border-radius: 10px; "
-            f"padding: 5px; "
-            f"margin: 0px 5px 0px 5px; "
-        )
-
-        # Create layout
-        layout = QVBoxLayout()
-        layout.setContentsMargins(2, 2, 2, 2)
-
-        # Add message text
-        self.message = QTextEdit()
-        self.message.setReadOnly(True)
-        self.message.setText(message_text)
-        self.message.setStyleSheet(
-            "background-color: transparent; border: none; color: #222222; padding: 0px;"
-        )
-
-        # Adjust height based on content
-        self.message.document().documentLayout().documentSizeChanged.connect(
-            self.adjust_text_edit_height
-        )
-
-        layout.addWidget(self.message)
-        self.setLayout(layout)
-
-        # Set maximum width based on parent
-        if parent:
-            self.setMaximumWidth(int(parent.width() * 0.8))
-
-    def adjust_text_edit_height(self):
-        """Adjust QTextEdit height based on content"""
-        doc_height = self.message.document().size().height()
-        self.message.setFixedHeight(int(doc_height + 5))
+from modules.document_models import ProcessingMode, DocumentRequest
+from modules.document_utils import add_chat_message
 
 
 class DocumentCreator(QWidget):
@@ -185,41 +117,7 @@ class DocumentCreator(QWidget):
 
     def add_message(self, text: str, is_user: bool):
         """Add a message to the chat history"""
-        # Create cursor for inserting text
-        cursor = self.chat_history.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-
-        # Set alignment based on who's sending the message
-        format = cursor.blockFormat()
-        if is_user:
-            format.setAlignment(Qt.AlignmentFlag.AlignRight)
-        else:
-            format.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        cursor.setBlockFormat(format)
-
-        # Create message bubble with background color and styling
-        bubble_style = (
-            "border-radius: 10px; padding: 5px;"
-            if is_user
-            else "border-radius: 10px; padding: 5px;"
-        )
-        message_html = f"""
-        <div style="{bubble_style}; margin: 5px; display: inline-block; max-width: 80%; text-align: left;">
-            {text}
-        </div>
-        """
-
-        # Insert HTML and a new line
-        cursor.insertHtml(message_html)
-        cursor.insertBlock()
-
-        # Set cursor position to the end
-        self.chat_history.setTextCursor(cursor)
-
-        # Scroll to bottom
-        self.chat_history.verticalScrollBar().setValue(
-            self.chat_history.verticalScrollBar().maximum()
-        )
+        add_chat_message(self.chat_history, text, is_user)
 
     def process_request(self):
         """Process the user request based on selected mode"""
