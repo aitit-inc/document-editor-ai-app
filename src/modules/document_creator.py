@@ -127,7 +127,6 @@ class DocumentCreator(QWidget):
 
         # Create a splitter for the main widgets
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.splitter.setSizes([1, 2])  # 1:2 ratio for left:right areas
 
         # Left side - Chat interface
         self.chat_widget = QWidget()
@@ -171,6 +170,10 @@ class DocumentCreator(QWidget):
         # Add both widgets to the splitter
         self.splitter.addWidget(self.chat_widget)
         self.splitter.addWidget(self.editor_widget)
+
+        # Set default width ratio: left area 1, right area 2.
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 2)
 
         main_layout.addWidget(self.splitter)
 

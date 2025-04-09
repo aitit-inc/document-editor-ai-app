@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("PyQt6 Desktop Application")
+        self.setWindowTitle("書類作成AIアシスタントツール")
         self.setGeometry(100, 100, 1600, 1000)
 
         # Create stacked widget to hold all our applications
