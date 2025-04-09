@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("PyQt6 Desktop Application")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1600, 1000)
 
         # Create stacked widget to hold all our applications
         self.stacked_widget = QStackedWidget()
@@ -45,8 +45,8 @@ class MainWindow(QMainWindow):
         self.init_welcome_screen()
         self.init_applications()
 
-        # Show welcome screen by default
-        self.stacked_widget.setCurrentIndex(0)
+        # Show document creator screen by default instead of welcome screen
+        self.stacked_widget.setCurrentWidget(self.document_creator)
 
         # Create menu bar
         self.create_menu_bar()
