@@ -212,21 +212,27 @@ class DocumentAIAgent(AIAgent):
             # Prepare user message with content
             user_input = f"{prompt}\n\n【テキスト】\n{content}"
             user_message = HumanMessage(content=user_input)
-
-            # Reset history for each request to maintain context isolation
-            messages = [system_message, user_message]
+            user_message_hor_history = HumanMessage(content=prompt)
 
             # Get response
-            response = self.model.invoke(messages)
+            input_to_ai = [*self.messages, system_message, user_message]
+            print(f"Input to AI: {input_to_ai}")
+            response = self.model.invoke(input_to_ai)
 
-            # Parse response for edit mode
+            # チャット履歴にはユーザーが入力したプロンプトのみ追加
+            self.messages.append(user_message_hor_history)
+
             if is_edit_mode:
+                # Parse response for edit mode
                 message, edited_content = self._parse_edit_response(
                     response.content, content
                 )
+                # Only add the 'message' part to history
+                self.messages.append(AIMessage(content=message))
                 return DocumentResponse(message=message, edited_content=edited_content)
             else:
                 # For question mode, just return the response
+                self.messages.append(AIMessage(content=response.content))
                 return DocumentResponse(message=response.content, edited_content=None)
 
         except Exception as e:
