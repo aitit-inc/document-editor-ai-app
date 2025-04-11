@@ -14,7 +14,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState, END
 
 # Pydantic imports
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 # Import app config
 from modules.config import config
@@ -29,10 +29,12 @@ class DocumentResponse(BaseModel):
     edited_content: Optional[str] = None
 
 
-class AIAgent:
+class DocumentAIAgent:
     """
-    AI Agent class that provides AI functionality using LangGraph and OpenAI.
+    AI Agent class that provides AI functionality using
+    LangGraph and OpenAI for document processing.
     Handles conversation flow and model interaction.
+    Returns a structured response with both message and edited content.
     """
 
     def __init__(self):
@@ -50,6 +52,9 @@ class AIAgent:
 
         # Initialize with current settings
         self._update_configuration()
+
+        # Initialize message history
+        self.initialize_history()
 
     def _update_configuration(self) -> bool:
         """
@@ -88,6 +93,8 @@ class AIAgent:
                 temperature=0.7,
             )
 
+            self.model = self.model.with_structured_output(DocumentResponse)
+
             # Setup LangGraph for conversation management
             self._setup_langgraph()
             return True
@@ -95,6 +102,16 @@ class AIAgent:
             print(f"Error setting up AI agent: {e}")
             self.model = None
             return True
+
+    def initialize_history(self):
+        """
+        Initialize the message history with a system message.
+        """
+        self.messages = [
+            SystemMessage(
+                content="あなたは優秀な社会保険労務士です。ユーザーの指示に従って、質問対応や書類作成・編集を行います。"
+            )
+        ]
 
     def _setup_langgraph(self):
         """Set up LangGraph for conversation flow"""
@@ -124,45 +141,6 @@ class AIAgent:
         # Compile graph
         self.agent = workflow.compile()
 
-    def process_message(self, user_input: str) -> str:
-        """
-        Process user message and get AI response.
-
-        Args:
-            user_input: The user's message
-
-        Returns:
-            AI response as a string
-        """
-        # Check for configuration updates before processing
-        self._update_configuration()
-
-        if not self.model:
-            return "APIキーが設定されていないため、応答できません。設定画面でAPIキーを設定してください。"
-
-        try:
-            # Add user message to history
-            self.messages.append(HumanMessage(content=user_input))
-
-            # Get response
-            result = self.agent.invoke({"messages": self.messages})
-
-            # Extract response
-            ai_message = result["messages"][-1]
-            self.messages.append(ai_message)
-
-            return ai_message.content
-        except Exception as e:
-            print(f"Error getting AI response: {e}")
-            return f"エラーが発生しました: {str(e)}"
-
-
-class DocumentAIAgent(AIAgent):
-    """
-    Extension of AIAgent specific for document processing.
-    Returns a structured response with both message and edited content.
-    """
-
     def process_document_request(
         self, prompt: str, content: str, is_edit_mode: bool
     ) -> DocumentResponse:
@@ -188,52 +166,64 @@ class DocumentAIAgent(AIAgent):
 
         try:
             # Prepare system message based on mode
-            if is_edit_mode:
-                system_message = SystemMessage(
-                    content="""あなたは書類作成アシスタントです。ユーザーの指示に従って提供されたテキストを編集してください。
-                    
-回答形式:
-1. 最初に編集内容の説明を記載してください。
-2. その後に明確な区切り「===編集後のテキスト===」を入れてください。
-3. その後に編集後のテキスト全体を記載してください。
-
-例:
-「文章を簡潔にしました。また、誤字を修正し、段落を整理しました。」
-
-===編集後のテキスト===
-（編集後のテキスト全体）
-"""
-                )
-            else:
-                system_message = SystemMessage(
-                    content="あなたは書類作成アシスタントです。ユーザーが提供したテキストについての質問に答えてください。"
-                )
+            #             if is_edit_mode:
+            #                 system_message = SystemMessage(
+            #                     content="""あなたは書類作成アシスタントです。ユーザーの指示に従って提供されたテキストを編集してください。
+            #
+            # 回答形式:
+            # 1. 最初に編集内容の説明を記載してください。
+            # 2. その後に明確な区切り「===編集後のテキスト===」を入れてください。
+            # 3. その後に編集後のテキスト全体を記載してください。
+            #
+            # 例:
+            # 「文章を簡潔にしました。また、誤字を修正し、段落を整理しました。」
+            #
+            # ===編集後のテキスト===
+            # （編集後のテキスト全体）
+            # """
+            #                 )
+            #             else:
+            #                 system_message = SystemMessage(
+            #                     content="あなたは書類作成アシスタントです。ユーザーが提供したテキストについての質問に答えてください。"
+            #                 )
 
             # Prepare user message with content
-            user_input = f"{prompt}\n\n【テキスト】\n{content}"
+            if is_edit_mode:
+                user_instruction = "指示に基づいてテキストを編集してください。"
+            else:
+                user_instruction = "質問に答えてください（テキスト編集は不要）。"
+
+            user_input = f"{user_instruction}\n\n{prompt}\n\n【テキスト】\n{content}"
             user_message = HumanMessage(content=user_input)
             user_message_hor_history = HumanMessage(content=prompt)
 
             # Get response
-            input_to_ai = [*self.messages, system_message, user_message]
-            print(f"Input to AI: {input_to_ai}")
+            input_to_ai = [*self.messages, user_message]
+            # print(f"Input to AI: {input_to_ai}")
             response = self.model.invoke(input_to_ai)
 
             # チャット履歴にはユーザーが入力したプロンプトのみ追加
             self.messages.append(user_message_hor_history)
 
+            message, edited_content = response.message, response.edited_content
             if is_edit_mode:
-                # Parse response for edit mode
-                message, edited_content = self._parse_edit_response(
-                    response.content, content
-                )
+                # # Parse response for edit mode
+                # message, edited_content = self._parse_edit_response(
+                #     response.content, content
+                # )
                 # Only add the 'message' part to history
+
                 self.messages.append(AIMessage(content=message))
-                return DocumentResponse(message=message, edited_content=edited_content)
+                return response
             else:
+                if edited_content:
+                    print(
+                        f"WARNING: Edited content was returned in question mode: {edited_content}"
+                    )
+
                 # For question mode, just return the response
-                self.messages.append(AIMessage(content=response.content))
-                return DocumentResponse(message=response.content, edited_content=None)
+                self.messages.append(AIMessage(content=message))
+                return DocumentResponse(message=message, edited_content=None)
 
         except Exception as e:
             print(f"Error processing document request: {e}")
