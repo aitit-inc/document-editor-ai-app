@@ -19,7 +19,6 @@ from PyQt6.QtCore import Qt
 from modules.notepad import Notepad
 from modules.image_viewer import ImageViewer
 from modules.pdf_viewer import PDFViewer
-from modules.ai_chat import AIChat
 from modules.document_creator import DocumentCreator
 from modules.settings import SettingsDialog
 
@@ -74,14 +73,12 @@ class MainWindow(QMainWindow):
         self.notepad = Notepad(self)
         self.image_viewer = ImageViewer(self)
         self.pdf_viewer = PDFViewer(self)
-        self.ai_chat = AIChat(self)
         self.document_creator = DocumentCreator(self)
 
         # Add them to the stacked widget
         self.stacked_widget.addWidget(self.notepad)
         self.stacked_widget.addWidget(self.image_viewer)
         self.stacked_widget.addWidget(self.pdf_viewer)
-        self.stacked_widget.addWidget(self.ai_chat)
         self.stacked_widget.addWidget(self.document_creator)
 
     def create_menu_bar(self):
@@ -104,9 +101,6 @@ class MainWindow(QMainWindow):
 
         pdf_viewer_action = demo_menu.addAction("PDFビューア")
         pdf_viewer_action.triggered.connect(self.open_pdf_viewer)
-
-        ai_chat_action = demo_menu.addAction("AIチャット")
-        ai_chat_action.triggered.connect(self.open_ai_chat)
 
         document_creator_action = demo_menu.addAction("書類作成")
         document_creator_action.triggered.connect(self.open_document_creator)
@@ -139,12 +133,6 @@ class MainWindow(QMainWindow):
         Opens the PDF viewer application.
         """
         self.stacked_widget.setCurrentWidget(self.pdf_viewer)
-
-    def open_ai_chat(self):
-        """
-        Opens the AI chat application.
-        """
-        self.stacked_widget.setCurrentWidget(self.ai_chat)
 
     def open_document_creator(self):
         """

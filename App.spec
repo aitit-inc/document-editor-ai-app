@@ -11,7 +11,6 @@ a = Analysis(
         'modules.notepad', 
         'modules.image_viewer', 
         'modules.pdf_viewer', 
-        'modules.ai_chat',
         'pydantic.deprecated.decorator',
         'pydantic.deprecated',
         'pydantic.json',
