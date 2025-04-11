@@ -30,11 +30,10 @@ def add_chat_message(chat_history: QTextEdit, text: str, is_user: bool):
     cursor.setBlockFormat(format)
 
     # Create message bubble with styling
-    bubble_style = (
-        "border-radius: 10px; padding: 5px;"
-        if is_user
-        else "border-radius: 10px; padding: 5px;"
-    )
+    if is_user:
+        bubble_style = "border: 2px solid #007bff; border-radius: 10px; padding: 5px; white-space: pre-wrap;"
+    else:
+        bubble_style = "border: 2px solid #6c757d; border-radius: 10px; padding: 5px; white-space: pre-wrap;"
     message_html = f"""
     <div style="{bubble_style}; margin: 5px; display: inline-block; max-width: 80%; text-align: left;">
         {text}
