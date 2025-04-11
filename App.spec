@@ -8,9 +8,6 @@ a = Analysis(
     datas=[('src/modules', 'modules')],  # モジュールを含める
     hiddenimports=[
         'modules.main_window', 
-        'modules.notepad', 
-        'modules.image_viewer', 
-        'modules.pdf_viewer', 
         'pydantic.deprecated.decorator',
         'pydantic.deprecated',
         'pydantic.json',

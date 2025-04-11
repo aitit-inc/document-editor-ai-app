@@ -16,9 +16,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from modules.notepad import Notepad
-from modules.image_viewer import ImageViewer
-from modules.pdf_viewer import PDFViewer
 from modules.document_creator import DocumentCreator
 from modules.settings import SettingsDialog
 
@@ -70,15 +67,9 @@ class MainWindow(QMainWindow):
         Initialize all application widgets.
         """
         # Create all application instances
-        self.notepad = Notepad(self)
-        self.image_viewer = ImageViewer(self)
-        self.pdf_viewer = PDFViewer(self)
         self.document_creator = DocumentCreator(self)
 
         # Add them to the stacked widget
-        self.stacked_widget.addWidget(self.notepad)
-        self.stacked_widget.addWidget(self.image_viewer)
-        self.stacked_widget.addWidget(self.pdf_viewer)
         self.stacked_widget.addWidget(self.document_creator)
 
     def create_menu_bar(self):
@@ -93,14 +84,6 @@ class MainWindow(QMainWindow):
         menu_bar.addMenu(demo_menu)
 
         # Add actions for each application
-        notepad_action = demo_menu.addAction("メモ帳")
-        notepad_action.triggered.connect(self.open_notepad)
-
-        image_viewer_action = demo_menu.addAction("イメージビューア")
-        image_viewer_action.triggered.connect(self.open_image_viewer)
-
-        pdf_viewer_action = demo_menu.addAction("PDFビューア")
-        pdf_viewer_action.triggered.connect(self.open_pdf_viewer)
 
         document_creator_action = demo_menu.addAction("書類作成")
         document_creator_action.triggered.connect(self.open_document_creator)
@@ -115,24 +98,6 @@ class MainWindow(QMainWindow):
         # Add Settings menu option
         settings_action = demo_menu.addAction("設定")
         settings_action.triggered.connect(self.open_settings)
-
-    def open_notepad(self):
-        """
-        Opens the notepad application.
-        """
-        self.stacked_widget.setCurrentWidget(self.notepad)
-
-    def open_image_viewer(self):
-        """
-        Opens the image viewer application.
-        """
-        self.stacked_widget.setCurrentWidget(self.image_viewer)
-
-    def open_pdf_viewer(self):
-        """
-        Opens the PDF viewer application.
-        """
-        self.stacked_widget.setCurrentWidget(self.pdf_viewer)
 
     def open_document_creator(self):
         """
